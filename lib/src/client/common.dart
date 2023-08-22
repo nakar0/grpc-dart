@@ -64,20 +64,9 @@ class ResponseFuture<R> extends DelegatingFuture<R>
             .fold<R?>(null, _ensureOnlyOneResponse)
             .then(_ensureOneResponse));
 
-  ResponseFuture._wrap(Future<R> future, {required ClientCall clientCall})
-      : _call = clientCall,
+  ResponseFuture.wrap(Future<R> future, {required ClientCall clientCall})
+      : _call = _unwrap(future) ?? clientCall,
         super(future);
-
-  /// `clientCall` maybe be lost when converting from Future to ResponseFuture
-  static ResponseFuture<T> wrap<T>(
-    Future<T> future, {
-    required ClientCall clientCall,
-  }) {
-    return ResponseFuture._wrap(
-      future,
-      clientCall: _unwrap(future) ?? clientCall,
-    );
-  }
 
   static ClientCall? _unwrap(Future future) =>
       future is ResponseFuture ? future._call : null;
@@ -85,24 +74,24 @@ class ResponseFuture<R> extends DelegatingFuture<R>
   @override
   ResponseFuture<S> then<S>(FutureOr<S> Function(R p1) onValue,
       {Function? onError}) {
-    return wrap(super.then(onValue, onError: onError), clientCall: _call);
+    return ResponseFuture.wrap(super.then(onValue, onError: onError), clientCall: _call);
   }
 
   @override
   ResponseFuture<R> catchError(Function onError,
       {bool Function(Object error)? test}) {
-    return wrap(super.catchError(onError, test: test), clientCall: _call);
+    return ResponseFuture.wrap(super.catchError(onError, test: test), clientCall: _call);
   }
 
   @override
   ResponseFuture<R> whenComplete(FutureOr Function() action) {
-    return wrap(super.whenComplete(action), clientCall: _call);
+    return ResponseFuture.wrap(super.whenComplete(action), clientCall: _call);
   }
 
   @override
   ResponseFuture<R> timeout(Duration timeLimit,
       {FutureOr<R> Function()? onTimeout}) {
-    return wrap(super.timeout(timeLimit, onTimeout: onTimeout),
+    return ResponseFuture.wrap(super.timeout(timeLimit, onTimeout: onTimeout),
         clientCall: _call);
   }
 }
